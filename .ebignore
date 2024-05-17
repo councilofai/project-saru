@@ -1,0 +1,11 @@
+# Ignore Windows system files
+$RECYCLE.BIN/
+NTUSER.*
+thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Ignore directories that are not needed for the deployment
+node_modules/
+.git/
+.vscode/

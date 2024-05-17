@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Council of AI Agents</title>
+
+  <style>    
+    #councilBanner{
+      width:100%;
+      background-color: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0em;
+      margin: 0.3em;
+      background-image: url("https://www.fcc.gov/themes/custom/fcc/assets/images/bg-pattern-header.png");
+    }
+
+    #councilName{
+      font-family: Garamond, serif;
+      color: antiquewhite;
+      font-size: 3em;
+      padding: 0em;
+      margin: 0.3em;
+   }
+
+    #userInputContainer{
+      max-width: 95%;
+      margin: auto;
+      height: 7em;
+      overflow: auto;
+      background-color: lightslategrey;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: url("https://www.fcc.gov/themes/custom/fcc/assets/images/bg-pattern-header.png");
+    }
+
+    #userPromptDiv{
+      width:100%;
+      background-color: antiquewhite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: lightslategrey;
+      background-image: url("https://www.fcc.gov/themes/custom/fcc/assets/images/bg-pattern-header.png");
+    }
+
+    #userPrompt{
+      height:5em;
+      width:90%;
+      border-radius: 5px;
+    }
+
+    #submitBtn{
+      height:5em;
+      border-radius: 5px;
+      border-color: green;
+      font-family: Garamond, serif;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    #submitBtn:hover{
+      cursor: pointer;
+    }
+
+    #discussionContainer {
+      max-width: 95%;
+      margin: auto;
+      height: 33em;
+      overflow: auto;
+      background-color: steelblue;
+      background-image: url("https://www.fcc.gov/themes/custom/fcc/assets/images/bg-pattern-header.png");
+      border: 0.1em black solid;
+    }
+
+    #discussionContainer div {
+      font-family: Verdana, Arial, sans-serif;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+  </style>
+</head>
+<body>
+<audio id="Sound_crickets">
+  <source src="Sound_crickets.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_rooster">
+  <source src="Sound_rooster.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_bahA">
+  <source src="Sound_bahA.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_cowMooA">
+  <source src="Sound_cowMooA.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_horseNeigh">
+  <source src="Sound_horseNeigh.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_FarmAnimalsA">
+  <source src="Sound_FarmAnimalsA.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_FarmAnimalsB">
+  <source src="Sound_FarmAnimalsB.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+<audio id="Sound_FarmAnimalsC">
+  <source src="Sound_FarmAnimalsC.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+
+  <div id="councilBanner">
+    <h1 id="councilName">Project Saru</h1>
+<!--
+    <h1 id="councilName">Council of AI Agents</h1>
+-->
+  </div>
+  <div id="userInputContainer">
+    <div id="userPromptDiv"><textarea id="userPrompt"></textarea><button id="submitBtn" onclick="initiateDiscussion()">Ask<br>Council</button></div>
+  </div>
+  <pre id="responses"></pre>
+  <div id="discussionContainer"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script type="text/javascript" src="client.js"></script>
+  <script>
+    function connectSocketIO() {
+      socket.on('discussionState', (state) => {
+        // Handle the updated state here
+        console.log(state);
+        const responsesElement = document.getElementById('responses');
+        responsesElement.innerText += JSON.stringify(state) + '\n';
+      });
+    }
+
+    async function initiateDiscussion() {
+      const prompt = document.getElementById('userPrompt').value;
+      const response = await fetch('http://localhost:8081/initiateDiscussion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+
+      const data = await response.json();
+      document.getElementById('responses').innerText = data.message + '\n';
+    }
+    window.onload = connectSocketIO;
+  </script>
+</body>
+</html>
