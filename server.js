@@ -1,3 +1,8 @@
+/*101010|100110*/
+//API KEYS SHOULD IDEALLY BE IN .ENV FILES
+const OPENAIAPIKEY = 'ENTER YOUR OPENAI API KEY HERE'; //this was included for convenience, but preferred to shift API key to .env file
+const PINECONEAIAPIKEY = 'ENTER YOUR PINECONE API KEY HERE'; //this is not necessary for the implementation used in the USMLE study; this is for instantiating a AI instance that is a "librarian" and has accss to a knowledge base
+
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
@@ -22,8 +27,9 @@ io.on('connection', (socket) => {
 });
 
 const { Configuration, OpenAIApi } = require("openai");
+
 const configuration = new Configuration({
-  apiKey: 'ENTER YOUR API KEY HERE'
+  apiKey: OPENAIAPIKEY
 });
 const openai = new OpenAIApi(configuration);
 
@@ -561,7 +567,7 @@ async function processQueryAndReturnResponse(query) {
   async function getEmbeddingForQuery(query) {
     thisIteration_getEmbeddingForQuery=thisIteration_getEmbeddingForQuery+1;
     trackIteration("thisIteration_getEmbeddingForQuery");
-    const apiKey = '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';
+    const apiKey = OPENAIAPIKEY;
     const url = 'https://api.openai.com/v1/embeddings';
     const headers = {
       'Content-Type': 'application/json',
@@ -583,8 +589,8 @@ async function processQueryAndReturnResponse(query) {
     trackIteration("searchVectorDB");
     const pinecone = new PineconeClient();
     await pinecone.init({
-      environment: "us-west4-gcp",
-      apiKey: "3331a43f-61a8-47c8-a54f-8c27e383f99d"
+      environment: "us-west4-gcp",//change this to match your pinecone db settings
+      apiKey: PINECONEAIAPIKEY
     });
 
     const index = pinecone.Index("langchain1-index");
@@ -657,19 +663,6 @@ async function processQueryAndReturnResponse(query) {
     };
 
     //retrieve context of retrieved vectors
-/*
-    _context_window=[];
-    pre_and_post_context_window=3;
-    for(i=0;i<queryResponse.matches.length;i++){
-      for(j=0;j<pre_and_post_context_window;j++){
-        _context_window.push(queryResponse.matches[i].metadata.chunkID1-(pre_and_post_context_window-j))
-      };
-      _context_window.push(queryResponse.matches[i].metadata.chunkID1)
-      for(j=1;j=pre_and_post_context_window;j++){
-        _context_window.push(queryResponse.matches[i].metadata.chunkID1+j)
-      };
-    };
-*/
     let _context_window = [];
     const pre_and_post_context_window = 3;
 
@@ -698,17 +691,6 @@ async function processQueryAndReturnResponse(query) {
     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-/*
-    const vectorsContexts = await index.query({
-      vector: empty_query_vector,
-      namespace:"poc-USMLEGPT-cid",
-      filter:{
-          chunkID1: {"$in": _context_window}
-      },
-      topK: _context_window.length,
-      includeMetadata: true,    
-    });
-*/    
     console.log("empty_query_vector", empty_query_vector);
     const vectorsContexts = await index.query({
       queryRequest: {
@@ -734,8 +716,6 @@ async function processQueryAndReturnResponse(query) {
       thisContext=vectorsContexts.matches[i].metadata.chunkID1.toString() +": "+vectorsContexts.matches[i].metadata.text;
       console.log("thisContext: "+thisContext);
       _vectorsContexts.push(thisContext);
-//      concactenatedResources = concactenatedResources +"; "+queryResponse.matches[i].metadata.text+" (DOCUMENT SOURCE: "+queryResponse.matches[i].metadata.source+")";
-//      respAndSourcesArray.push({"resp":queryResponse.matches[i].metadata.text, "source":queryResponse.matches[i].metadata.source});
       console.log("---------------------------------------------------------------------------")
     };
     _vectorsContexts.sort();
@@ -851,7 +831,6 @@ async function processQueryAndReturnResponse(query) {
             messages: [
               {role: "system", content: "You are a smart and helpful biomedical bot. You understand preclinical therapuetics to mean: formulation development ( assesses the best way to prepare a drug in the preclinical phase for its intended clinical use in patients. Factors such as solubility, frequency and mode of administration, stability of the formula, and palatability are all assessed), pharmacology (assesses the safety of a drug as well as its ADME – Absorption and the bioavailability of the drug once administered; Distribution; Metabolism; and Excretion), and toxicology ( safety assessment of a drug monitors both pharmacodynamic (PD) and pharmacokinetic (PK) interactions. PD interactions are where the drug administered can affect the actions of another specified drug without affecting its concentration. PK interactions are where the drug administered can affect the actions of another specified drug by affecting its concentration or that of its metabolites)."},
               {role: "user", content: "Answer the following biomedical query using 'my internal database': " + query + ". If the information provided by 'my internal database' does not directly answer the query, then do not respond with language but respond numerically with the following number: 101. Use only the following resources, 'my internal database', to answer the query - 'my internal database': " + resourcesArray[i] + "."}
-//            {role: "user", content: "Answer the following biomedical query using 'my internal database'. QUERY: " + query + ". If the information provided by 'my internal database' does not directly answer the query, then do NOT answer the query. Use only the following resources, 'my internal database', to answer the query - 'my internal database': " + resourcesArray[i] + "Remember, you MUST only use 'my internal database' to answer the question."}
             ],
             temperature: 0,
             max_tokens: 2000,
@@ -871,8 +850,6 @@ async function processQueryAndReturnResponse(query) {
       console.log("==============RESPONSES STRING==================");
       console.log(responsesString);
       console.log("================================================");
-      //Return the responsesString to display
-//      return responsesString;
       gl_responsesString=responsesString;
       gl_responsesArray=responsesArray;
 
@@ -908,7 +885,6 @@ async function processQueryAndReturnResponse(query) {
         const response_total = await openai.createChatCompletion({
           model: selectedModelSynth, //gpt-3.5-turbo-0301 or gpt-4
           messages: [
-//            {role: "system", content: "You are a smart and helpful biomedical bot."},
             {role: "system", content: "You are a smart and helpful biomedical bot. You understand preclinical therapuetics to mean: formulation development ( assesses the best way to prepare a drug in the preclinical phase for its intended clinical use in patients. Factors such as solubility, frequency and mode of administration, stability of the formula, and palatability are all assessed), pharmacology (assesses the safety of a drug as well as its ADME – Absorption and the bioavailability of the drug once administered; Distribution; Metabolism; and Excretion), and toxicology ( safety assessment of a drug monitors both pharmacodynamic (PD) and pharmacokinetic (PK) interactions. PD interactions are where the drug administered can affect the actions of another specified drug without affecting its concentration. PK interactions are where the drug administered can affect the actions of another specified drug by affecting its concentration or that of its metabolites)."},
             {role: "user", content: "Answer the following biomedical query using 'my internal database': " + query + ". If the information provided by 'my internal database' does not directly answer the query, then use your reasoning to answer the question. Resources to use to answer the query before using your own reasoning - 'my internal database': " + responsesString + "."}
           ],
@@ -945,7 +921,6 @@ async function processQueryAndReturnResponse(query) {
         for(i=0;i<resourcesArray.length;i++){
           const response_eachsegment = await openai.createCompletion({
             model: "text-davinci-003",
-//            prompt: "Answer the following biomedical query using 'my internal database': "+query+". If the information provided by 'my internal database' does not directly answer the query, then do not respond with language but respond numerically with the following number: 101. Use only the following resources, 'my internal database', to answer the query - 'my internal database': "+resourcesArray[i]+".",
             prompt: "Answer the following biomedical query by synthesizing 'my internal database sources': " + query + ". If the information provided by 'my internal database sources' does not directly answer the query, then use your reasoning to answer the question. Resources to synthesize to answer the query before using your own reasoning - 'my internal database sources': " + responsesString + ".",
             temperature: 1,
             max_tokens: 2000,
@@ -961,9 +936,7 @@ async function processQueryAndReturnResponse(query) {
           const response_eachsegment = await openai.createChatCompletion({
             model: selectedModelSynth, //gpt-3.5-turbo-0301 or gpt-4
             messages: [
-//              {role: "system", content: "You are a smart and helpful biomedical bot."},
               {role: "system", content: "You are a smart and helpful biomedical bot. You understand preclinical therapuetics to mean: formulation development ( assesses the best way to prepare a drug in the preclinical phase for its intended clinical use in patients. Factors such as solubility, frequency and mode of administration, stability of the formula, and palatability are all assessed), pharmacology (assesses the safety of a drug as well as its ADME – Absorption and the bioavailability of the drug once administered; Distribution; Metabolism; and Excretion), and toxicology ( safety assessment of a drug monitors both pharmacodynamic (PD) and pharmacokinetic (PK) interactions. PD interactions are where the drug administered can affect the actions of another specified drug without affecting its concentration. PK interactions are where the drug administered can affect the actions of another specified drug by affecting its concentration or that of its metabolites)."},
-//              {role: "user", content: "Answer the following biomedical query using 'my internal database': " + query + ". If the information provided by 'my internal database' does not directly answer the query, then do not respond with language but respond numerically with the following number: 101. Use only the following resources, 'my internal database', to answer the query - 'my internal database': " + resourcesArray[i] + "."}
               {role: "user", content: "Answer the following biomedical query by synthesizing 'my internal database sources': " + query + ". If the information provided by 'my internal database sources' does not directly answer the query, then use your reasoning to answer the question. Resources to synthesize to answer the query before using your own reasoning - 'my internal database sources': " + responsesString + "."}
             ],
             temperature: 1,
@@ -985,7 +958,6 @@ async function processQueryAndReturnResponse(query) {
       console.log(responsesString);
       console.log("================================================");
       //Return the responsesString to display
-//      return responsesString;
       gl_responsesString=responsesString;
       gl_responsesArray=responsesArray;
 
@@ -1021,9 +993,7 @@ async function processQueryAndReturnResponse(query) {
         const response_total = await openai.createChatCompletion({
           model: selectedModelSynth, //gpt-3.5-turbo-0301 or gpt-4
           messages: [
-//            {role: "system", content: "You are a smart and helpful biomedical bot."},
             {role: "system", content: "You are a smart and helpful biomedical bot. You understand preclinical therapuetics to mean: formulation development ( assesses the best way to prepare a drug in the preclinical phase for its intended clinical use in patients. Factors such as solubility, frequency and mode of administration, stability of the formula, and palatability are all assessed), pharmacology (assesses the safety of a drug as well as its ADME – Absorption and the bioavailability of the drug once administered; Distribution; Metabolism; and Excretion), and toxicology ( safety assessment of a drug monitors both pharmacodynamic (PD) and pharmacokinetic (PK) interactions. PD interactions are where the drug administered can affect the actions of another specified drug without affecting its concentration. PK interactions are where the drug administered can affect the actions of another specified drug by affecting its concentration or that of its metabolites)."},
-//            {role: "user", content: "Answer the following biomedical query using 'my internal database': " + query + ". If the information provided by 'my internal database' does not directly answer the query, then use your reasoning to answer the question. Resources to use to answer the query before using your own reasoning - 'my internal database': " + responsesString + "."},
             {role: "user", content: "Answer the following biomedical query by synthesizing 'my internal database sources': " + query + ". If the information provided by 'my internal database sources' does not directly answer the query, then use your reasoning to answer the question. Resources to synthesize to answer the query before using your own reasoning - 'my internal database sources': " + responsesString + "."}
           ],
           temperature: 0,
@@ -1064,8 +1034,6 @@ async function processQueryAndReturnResponse(query) {
       console.log("response_eachsegment: "+response_eachsegment);
       console.log("response_eachsegment.data: "+response_eachsegment.data);
       console.log("response_eachsegment.data.choices[0]: "+response_eachsegment.data.choices[0]);
-//      str = JSON.stringify(response_eachsegment.data.choices[0], null, 4);
-//      console.log("str: "+str);
       console.log("response_eachsegment.data.choices[0].message.content: "+response_eachsegment.data.choices[0].message.content);
       console.log("(((((((((((((((((((((((((((((((((==================================))))))))))))))))))))))))))))))))))))))");
     };
@@ -1115,12 +1083,6 @@ async function processQueryAndReturnResponse(query) {
       var NLresponse=response_total.data.choices[0].message.content;
       return NLresponse;
 
-/*
-      var NLresponseGrade=await evaluateQualityOfResponse(NLresponse,maxTokens,selectedModelSynth);
-      //if user only wants a response if it's above a certain threshold 
-      var thisResponse=await checkResponseQualityThresholdAndQperm(NLresponse,NLresponseGrade);
-      return thisResponse;
-*/
     };
   };
 
@@ -1201,8 +1163,6 @@ async function itereateThroughQueryPerms(queryPerm){
   }else{
     responseToDisplay_qp=checkRedoOrDisplay_qp
     const responseToDisplayObj_qp=[queryPerm,queryPermsArray,responseToDisplay_qp,gl_responsesArray,gl_interleavedChunksArray];
-//    socket.emit('response', responseToDisplayObj_qp);
-//    return responseToDisplayObj_qp;
     return checkRedoOrDisplay_qp;
   };
 };
@@ -1285,7 +1245,6 @@ async function itereateThroughQueryPerms(queryPerm){
         processedArray.push(processedText);
       } else {
         // If there are fewer than three elements left, just copy them to the processed array
-//        processedArray.push(...inputArray.slice(i));
         const processedText = await processNElements(query,...inputArray.slice(i),maxTokens,selectedModelSynth);
         processedArray.push(processedText);
         break;
