@@ -488,9 +488,3 @@ The code includes extensive experimental functionality for a knowledge-base conn
 1. Setting up Pinecone vector database
 2. Configuring the Pinecone API key
 3. Uncommenting the librarian agent in the council registry
-
-This implementation provides sophisticated RAG (Retrieval-Augmented Generation) capabilities with embedding search, context window management, and quality evaluation systems.
-
----
-
-This guide explains how the existing Project Saru code actually works and how to run it successfully. The system demonstrates sophisticated multi-agent coordination with real consensus-building mechanisms designed specifically for medical reasoning tasks.
